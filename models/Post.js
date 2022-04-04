@@ -17,6 +17,11 @@ const PostSchema = new mongoose.Schema(
       type: Array,
       default: [],
     },
+    createdAt: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
   },
   { timestaps: true }
 );
