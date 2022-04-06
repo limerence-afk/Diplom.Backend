@@ -1,6 +1,26 @@
 const User = require('../models/User');
 const router = require('express').Router();
 const Post = require('../models/Post');
+const multer = require('multer');
+const processFile = require('../middleware/processFile');
+const uploadFile = require('../core/uploadFile');
+const { reset } = require('nodemon');
+
+//upload file
+router.post('/upload', async (req, res) => {
+  await processFile(req, res);
+  if (!req.file) {
+    return res.status(400).send({ message: 'Please upload a file!' });
+  }
+  try {
+    const uploadedFileUrl = await uploadFile('posts', req.file);
+    res.status(200).json(uploadedFileUrl);
+  } catch (err) {
+    res.status(500).json(err);
+    console.log(err);
+  }
+});
+
 //create post
 router.post('/', async (req, res) => {
   const newPost = new Post(req.body);
@@ -68,13 +88,10 @@ router.get('/:id', async (req, res) => {
 router.get('/timeline/:userId', async (req, res) => {
   try {
     const currentUser = await User.findById(req.params.userId);
-    const userPosts = await Post.find({ userId: currentUser._id });
-    const friendPosts = await Promise.all(
-      currentUser.followings.map((friendId) => {
-        return Post.find({ userId: friendId });
-      })
-    );
-    res.status(200).json(userPosts.concat(...friendPosts));
+    const userPosts = await Post.find({
+      userId: { $in: [currentUser._id, ...currentUser.followings] },
+    }).sort({ createdAt: -1 });
+    res.status(200).json(userPosts);
   } catch (err) {
     res.status(500).json(err);
     console.log(err);
@@ -84,7 +101,7 @@ router.get('/timeline/:userId', async (req, res) => {
 router.get('/profile/:username', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username });
-    const posts = await Post.find({ userId: user._id });
+    const posts = await Post.find({ userId: user._id }).sort({ createdAt: -1 });
     res.status(200).json(posts);
   } catch (err) {
     res.status(500).json(err);
