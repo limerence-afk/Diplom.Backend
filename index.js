@@ -8,6 +8,8 @@ const morgan = require('morgan');
 const userRoute = require('./routes/users.js');
 const authRoute = require('./routes/auth.js');
 const postRoute = require('./routes/posts.js');
+const conversationRoute = require('./routes/conversations.js');
+const messageRoute = require('./routes/messages.js');
 const cors = require('cors');
 
 mongoose.connect(process.env.MONGO_URL, () =>
@@ -22,4 +24,7 @@ app.use(cors());
 app.use('/api/users', userRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/posts', postRoute);
+app.use('/api/conversations', conversationRoute);
+app.use('/api/messages', messageRoute);
+
 app.listen(process.env.PORT, () => console.log('Server is running'));
