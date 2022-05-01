@@ -33,8 +33,12 @@ router.post('/login', async (req, res) => {
       req.body.password,
       user.password
     );
+
     if (!validPassword) res.status(401).json('incorrect password');
-    else res.status(200).json({ username: user.username, email: user.email });
+    else {
+      const { password, isAdmin, ...other } = user._doc;
+      res.status(200).json(other);
+    }
   } catch (err) {
     console.error(err);
     res.sendStatus(500);
