@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
-
+const processFile = require('../middleware/processFile');
+const uploadFile = require('../core/uploadFile');
 //update user
 router.put('/:id', async (req, res) => {
   if (req.body.userId === req.params.id || req.body.isAdmin) {
@@ -23,6 +24,24 @@ router.put('/:id', async (req, res) => {
     }
   } else {
     return res.status(403).json('You can update only your account');
+  }
+});
+
+//user img update
+router.post('/img/:id', async (req, res) => {
+  await processFile(req, res);
+  if (!req.file) {
+    return res.status(400).send({ message: 'Please upload a file!' });
+  }
+  try {
+    const uploadedFileUrl = await uploadFile('users', req.file);
+    const user = await User.findByIdAndUpdate(req.params.id, {
+      profilePicture: uploadedFileUrl.url,
+    });
+    user.profilePicture = uploadedFileUrl.url;
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json(err);
   }
 });
 //delete user

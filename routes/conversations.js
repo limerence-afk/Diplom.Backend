@@ -3,11 +3,25 @@ const Conversation = require('../models/Conversation');
 
 //new conv
 router.post('/', async (req, res) => {
-  const newConversation = new Conversation({
-    members: [req.body.senderId, req.body.receiverId],
-  });
-
   try {
+    const conversation = await Conversation.find({
+      $or: [
+        { members: [req.body.senderId, req.body.receiverId] },
+        { members: [req.body.receiverId, req.body.senderId] },
+      ],
+    });
+    if (conversation.length > 0) {
+      res.statusCode(400);
+      return;
+    }
+  } catch (err) {
+    res.status(400).json(err);
+    return;
+  }
+  try {
+    const newConversation = new Conversation({
+      members: [req.body.senderId, req.body.receiverId],
+    });
     const savedConversation = await newConversation.save();
     res.status(200).json(savedConversation);
   } catch (err) {
